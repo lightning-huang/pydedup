@@ -5,12 +5,15 @@ from os.path import join,getsize
 picked_size = 1024000
 
 if len(sys.argv) < 2:
-	print('USAGE: python dedup.py {directory}')
+	print('USAGE: python dedup.py {directory} {anystringtojustprint}')
 	sys.exit(-1)
 
 def mark_gabage(l, file, seed):
 	l.append(file)
-	print('same as %s, gabage found: %s'%(seed,file))
+	if seed == None:
+		print('empty-file-gabage found: %s'%file)
+	else:
+		print('same as %s, gabage found: %s'%(seed,file))
 
 hash_repo = {}
 gabage = []
@@ -20,7 +23,7 @@ for root, dirs, files in os.walk(sys.argv[1]):
 			full_path = join(root,file)
 			file_size = getsize(full_path)
 			if file_size <= 0:
-				mark_gabage(gabage, full_path)
+				mark_gabage(gabage, full_path, None)
 				continue
 			f = open(full_path,'rb')
 			bytesfromfile = f.read(picked_size)
@@ -34,9 +37,13 @@ for root, dirs, files in os.walk(sys.argv[1]):
 			else:
 				hash_repo[current_md5_hex] = full_path
 				print('keep %s'%full_path)
-				
+
+print("gabage summary")
+print("gabage entry amount: %s"%len(gabage))
 for f in gabage:
 	command = 'del /F /Q \"%s\"'%f
-	print('kill dup, execute - ' + command)
-	os.system(command)
-				
+	if len(sys.argv) >= 3:
+		print('just print: kill dup, execute - ' + command)
+	else:
+		print('kill dup, execute - ' + command)
+		os.system(command)
