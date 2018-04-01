@@ -17,6 +17,7 @@ def mark_gabage(l, file, seed):
 
 hash_repo = {}
 gabage = []
+systemerrorfiles = []
 for root, dirs, files in os.walk(sys.argv[1]):
 	if len(files) > 0:
 		for file in files:
@@ -25,21 +26,27 @@ for root, dirs, files in os.walk(sys.argv[1]):
 			if file_size <= 0:
 				mark_gabage(gabage, full_path, None)
 				continue
-			f = open(full_path,'rb')
-			bytesfromfile = f.read(picked_size)
-			f.close()
-			current_md5 = hashlib.md5()
-			current_md5.update(bytesfromfile)
-			current_md5.update(('%s'%file_size).encode('UTF-8'))
-			current_md5_hex = current_md5.hexdigest()
-			if current_md5_hex in hash_repo.keys():
-				mark_gabage(gabage, full_path, hash_repo[current_md5_hex])
-			else:
-				hash_repo[current_md5_hex] = full_path
-				print('keep %s'%full_path)
+			try:
+				f = open(full_path,'rb')
+				bytesfromfile = f.read(picked_size)
+				f.close()
+				current_md5 = hashlib.md5()
+				current_md5.update(bytesfromfile)
+				current_md5.update(('%s'%file_size).encode('UTF-8'))
+				current_md5_hex = current_md5.hexdigest()
+				if current_md5_hex in hash_repo.keys():
+					mark_gabage(gabage, full_path, hash_repo[current_md5_hex])
+				else:
+					hash_repo[current_md5_hex] = full_path
+					print('keep %s'%full_path)
+			except:
+				print('meet system error for %s'%full_path) 
+				systemerrorfiles.append(full_path)
 
 print("gabage summary")
 print("gabage entry amount: %s"%len(gabage))
+if len(systemerrorfiles) > 0:
+	print('system error files amount: %s'%len(systemerrorfiles))
 for f in gabage:
 	command = 'del /F /Q \"%s\"'%f
 	if len(sys.argv) >= 3:
